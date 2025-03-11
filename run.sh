@@ -2,7 +2,7 @@
  # @Author: Galazxhy galazxhy@163.com
  # @Date: 2025-02-24 20:24:11
  # @LastEditors: Galazxhy galazxhy@163.com
- # @LastEditTime: 2025-02-26 19:15:19
+ # @LastEditTime: 2025-03-11 15:36:46
  # @FilePath: /GPM/run.sh
  # @Description: Run code script
  # 
@@ -10,21 +10,24 @@
 ### 
 #!/bin/bash
 #Settings
-device=cuda:0
+device=cuda:1
 #Data
-data=Cora
+data=Pubmed
 #If full-supervised
 val_rt=0.2
 trn_per_class=10
 #Training
 model=GPM
-mode=voting
-rep=2
+mode=residual
+rep=20
 epoch=1000
 lr=1e-4
 wd=1e-4
 max_prop=4
-alpha=1.2
-beta=2
+alpha=1
+beta=1.6
+#Early stopping
+patience=10
+delta=3e-4
 
-python Run.py --device $device --data $data --val_rt $val_rt --trn_per_class $trn_per_class --model $model --mode $mode --rep $rep --epoch $epoch --lr $lr --wd $wd --max_prop $max_prop --alpha $alpha --beta $beta
+python Run.py --device $device --data $data --val_rt $val_rt --trn_per_class $trn_per_class --model $model --mode $mode --rep $rep --epoch $epoch --lr $lr --wd $wd --patience $patience --delta $delta --max_prop $max_prop --alpha $alpha --beta $beta

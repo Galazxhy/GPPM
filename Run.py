@@ -2,9 +2,9 @@
 Author: Galazxhy galazxhy@163.com
 Date: 2025-02-21 18:33:07
 LastEditors: Galazxhy galazxhy@163.com
-LastEditTime: 2025-02-26 19:25:26
-FilePath: /GPM/Run.py
-Description: Run code
+LastEditTime: 2025-03-11 15:34:39
+FilePath: /GPPM/Run.py
+Description: Code Running Script
 
 Copyright (c) 2025 by Astroyd, All Rights Reserved. 
 '''
@@ -27,15 +27,17 @@ def run(args):
     print('-------------- Loading Data --------------')
     data, nFeatures, nClasses = Utils.getData(args.data, args.trn_per_class, args.val_rt)
     data = data.to(device)
+    earlyStopping = Utils.EarlyStopping(patience=args.patience, delta=args.delta)
     bestNets = []
     bestResults = []
     
     for i in range(args.rep):
         print(f'Repetition {i}')
         print('------------ Initializing model -------------')
+        earlyStopping.reset()
         best = [0, 0, 0, 0]
         bestNet = None
-        net = Model.GPM(nFeatures, nClasses, args.max_prop, args.mode).to(device)
+        net = Model.GPM(nFeatures, nClasses, args.max_prop, args.alpha, args.beta, args.mode).to(device)
         
         optimizer = torch.optim.Adam(net.parameters(), lr=args.lr, weight_decay=args.wd)
         print(f'---------------- Epoch {i} -------------------')
@@ -51,6 +53,7 @@ def run(args):
             optimizer.step()
             net.eval()
             logits = net(data.x.to(device), data.edge_index.to(device))
+            val_loss = F.cross_entropy(logits[data.val_mask], data.y[data.val_mask])
             accs = []
             for _, mask in data('train_mask', 'val_mask'):
                 pred = logits[mask].max(1)[1]
@@ -59,9 +62,12 @@ def run(args):
             pred = logits[data.test_mask].max(1)[1]
             acc = pred.eq(data.y[data.test_mask]).sum().item() / data.test_mask.sum().item()
             accs.append(acc)
-            if acc > best[2]:
+            earlyStopping(val_loss, accs)
+            if earlyStopping.earlyStop:
                 best = accs
                 bestNet = net
+                print(f"Early stopping at epoch {j}")
+                break
             tbar.set_postfix(Loss='{:.5f}'.format(loss.item()), trainAcc='{:.5f}'.format(accs[0]), valAcc='{:.5f}'.format(accs[1]), testAcc='{:.5f}'.format(accs[2]))
             tbar.update()
         bestNets.append(bestNet)
@@ -95,6 +101,11 @@ if __name__ == '__main__':
     parser.add_argument('--max_prop', type=int, default=4, help='Maximum propagation range (Not supporting customized range like (1, 3, 5))')
     parser.add_argument('--alpha', type=float, default=1, help='Alpha for sigmoid function')
     parser.add_argument('--beta', type=float, default=2, help='Beta for sigmoid function')
+
+    #Early stopping
+    parser.add_argument('--patience', type=int, default=20, help='Patience of early stopping')
+    parser.add_argument('--delta', type=float, default=0, help='Minimum change of early stopping')
+
 
     args = parser.parse_args()
     run(args)

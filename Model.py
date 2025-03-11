@@ -2,9 +2,9 @@
 Author: Galazxhy galazxhy@163.com
 Date: 2025-02-21 16:16:43
 LastEditors: Galazxhy galazxhy@163.com
-LastEditTime: 2025-02-25 14:37:58
-FilePath: /GPM/Model.py
-Description: Graph Models 
+LastEditTime: 2025-03-11 15:34:08
+FilePath: /GPPM/Model.py
+Description: Graph Pseudo-label Propagation Model 
 
 Copyright (c) 2025 by Astroyd, All Rights Reserved. 
 '''
@@ -28,7 +28,7 @@ class plpLayer(nn.Module):
     param {Range of propagation} propRange
     param {Ensembling mode} mode
     '''  
-    def __init__(self, nFeature, nClass, propRange, mode):
+    def __init__(self, nFeature, nClass, propRange, mode, alpha, beta):
          
         super(plpLayer, self).__init__()
         self.predSeq = nn.Sequential(
@@ -39,6 +39,8 @@ class plpLayer(nn.Module):
         self.softmax = nn.Softmax(dim=1)
         self.propRange = propRange
         self.mode = mode
+        self.alpha = alpha
+        self.beta = beta
     
     '''
     description: Propagation process
@@ -51,13 +53,13 @@ class plpLayer(nn.Module):
         if self.mode != 'residual':
             pLabelRe = pLabel
             for i in range(self.propRange):
-                pLabel = Utils.soft_logic_mm(propMatrix, pLabelRe)
+                pLabel = Utils.soft_logic_mm(propMatrix, pLabelRe, self.alpha, self.beta)
             return self.softmax(pLabel)
         else:
             pLabelAll = []
             pLabelRe = pLabel
             for i in range(self.propRange):
-                pLabelRe = Utils.soft_logic_mm(propMatrix, pLabelRe)
+                pLabelRe = Utils.soft_logic_mm(propMatrix, pLabelRe, self.alpha, self.beta)
                 pLabelAll.append(self.softmax(pLabelRe))
             return pLabelAll
 
@@ -89,19 +91,19 @@ class GPM(nn.Module):
     param {Range of propagation} propRange
     param {Mode of } mode
     '''    
-    def __init__(self, nFeature, nClass, propRange, mode='ensemble'):
+    def __init__(self, nFeature, nClass, propRange, alpha, beta, mode='ensemble'):
         super(GPM, self).__init__()
         if mode == 'None':
             self.plpList = nn.ModuleList([
-                plpLayer(nFeature, nClass, propRange, mode)
+                plpLayer(nFeature, nClass, propRange, mode, alpha, beta)
             ])
         elif mode == 'voting':
             self.plpList = nn.ModuleList()
             for i in range(propRange):
-                self.plpList.append(plpLayer(nFeature, nClass, i+1, mode))
+                self.plpList.append(plpLayer(nFeature, nClass, i+1, mode, alpha, beta))
         else:
             self.plpList = nn.ModuleList([
-                plpLayer(nFeature, nClass, propRange, mode)
+                plpLayer(nFeature, nClass, propRange, mode, alpha, beta)
             ])
         
         self.propRange = propRange

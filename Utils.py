@@ -2,9 +2,9 @@
 Author: Galazxhy galazxhy@163.com
 Date: 2025-02-20 21:09:59
 LastEditors: Galazxhy galazxhy@163.com
-LastEditTime: 2025-02-26 19:32:07
-FilePath: /GPM/Utils.py
-Description: Tool functions 
+LastEditTime: 2025-03-11 15:34:43
+FilePath: /GPPM/Utils.py
+Description: Tool Functions 
 
 Copyright (c) 2025 by Astroyd, All Rights Reserved. 
 '''
@@ -112,9 +112,9 @@ param {matrix A} A
 param {matrix B} B
 return {Logical multiplication result of A and B}
 '''
-def soft_logic_mm(A, B):
+def soft_logic_mm(A, B, alpha, beta):
     # return torch.mm(A, B)
-    return sigmoid(torch.mm(A, B), 1, 2)
+    return sigmoid(torch.mm(A, B), alpha, beta)
 
 '''
 description: Save to file
@@ -133,3 +133,50 @@ def saveToFile(nets, results):
             f.write('Train Accuracy:'+ str(results[j,0])+ '\n')
             f.write('Validation Accuracy'+ str(results[j,1])+ '\n')
             f.write('Test Accuracy:'+ str(results[j,2])+ '\n')
+
+
+class EarlyStopping:
+    '''
+    description: Early stopping 
+    method {Initializing} __init__()
+    method {Iteration} __call__()
+    method {Reset} reset()
+    '''    
+    '''
+    description: Initializing
+    param {Class EarlyStopping} self
+    param {How long to wait after last time validation loss improved.} patience
+    param {Minimum change in the monitored quantity to qualify as an improvement.} delta
+    '''    
+    def __init__(self, patience=7, delta=0):
+        self.patience = patience
+        self.counter = 0
+        self.bestScore = None
+        self.earlyStop = False
+        self.delta = delta
+
+    '''
+    description: Iteration step
+    param {Class EarlyStopping} self
+    param {Results of training} results
+    '''
+    def __call__(self, val_loss, results):
+        score = -val_loss
+        if self.bestScore is None:
+            self.bestScore = score
+        elif score < self.bestScore + self.delta:
+            self.counter += 1
+            if self.counter >= self.patience:
+                self.earlyStop = True
+        else:
+            self.bestScore = score
+            self.counter = 0
+
+    '''
+    description: Reset parameters
+    param {Class EarlyStopping} self
+    '''    
+    def reset(self):
+        self.bestScore = None
+        self.earlyStop = False
+        self.counter = 0
