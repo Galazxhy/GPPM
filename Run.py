@@ -2,8 +2,8 @@
 Author: Galazxhy galazxhy@163.com
 Date: 2025-02-21 18:33:07
 LastEditors: Galazxhy galazxhy@163.com
-LastEditTime: 2025-03-11 15:34:39
-FilePath: /GPPM/Run.py
+LastEditTime: 2025-04-14 10:32:04
+FilePath: /GPM/Run.py
 Description: Code Running Script
 
 Copyright (c) 2025 by Astroyd, All Rights Reserved. 
@@ -37,7 +37,7 @@ def run(args):
         earlyStopping.reset()
         best = [0, 0, 0, 0]
         bestNet = None
-        net = Model.GPM(nFeatures, nClasses, args.max_prop, args.alpha, args.beta, args.mode).to(device)
+        net = Model.GPPM(nFeatures, nClasses, args.max_prop, args.alpha, args.beta, args.mode).to(device)
         
         optimizer = torch.optim.Adam(net.parameters(), lr=args.lr, weight_decay=args.wd)
         print(f'---------------- Epoch {i} -------------------')
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     parser.add_argument('--trn_per_class', type=int, default='10', help='Number of training labels per class')
     
     # Training
-    parser.add_argument('--model', type=str, default='GPM', choices=['GPM'], help='Ensemble mode')
+    parser.add_argument('--model', type=str, default='GPPM', choices=['GPPM'], help='Ensemble mode')
     parser.add_argument('--mode', type=str, default='voting', choices=['None', 'voting', 'residual'], help='Ensemble mode')
     parser.add_argument('--rep', type=int, default=20, help='Repetition times')
     parser.add_argument('--epoch', type=int, default=500, help='Training epoch')

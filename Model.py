@@ -2,8 +2,8 @@
 Author: Galazxhy galazxhy@163.com
 Date: 2025-02-21 16:16:43
 LastEditors: Galazxhy galazxhy@163.com
-LastEditTime: 2025-03-11 15:34:08
-FilePath: /GPPM/Model.py
+LastEditTime: 2025-04-14 10:32:11
+FilePath: /GPM/Model.py
 Description: Graph Pseudo-label Propagation Model 
 
 Copyright (c) 2025 by Astroyd, All Rights Reserved. 
@@ -77,7 +77,7 @@ class plpLayer(nn.Module):
 
         return y
     
-class GPM(nn.Module):
+class GPPM(nn.Module):
     '''
     description: Graph propagation model
     method {Initialization} __init__()
@@ -85,14 +85,14 @@ class GPM(nn.Module):
     '''
     '''
     description: description
-    param {Class GPM} self
+    param {Class GPPM} self
     param {Number of features} nFeature
     param {Number of classes} nClass
     param {Range of propagation} propRange
     param {Mode of } mode
     '''    
     def __init__(self, nFeature, nClass, propRange, alpha, beta, mode='ensemble'):
-        super(GPM, self).__init__()
+        super(GPPM, self).__init__()
         if mode == 'None':
             self.plpList = nn.ModuleList([
                 plpLayer(nFeature, nClass, propRange, mode, alpha, beta)
@@ -111,7 +111,7 @@ class GPM(nn.Module):
     
     '''
     description: Forward calculation
-    param {Class GPM} self
+    param {Class GPPM} self
     param {Node features} x
     param {Edge indices} edgeIndex
     return {Results}
