@@ -2,7 +2,7 @@
 Author: Galazxhy galazxhy@163.com
 Date: 2025-02-21 16:16:43
 LastEditors: Galazxhy galazxhy@163.com
-LastEditTime: 2025-04-14 10:32:11
+LastEditTime: 2025-04-17 16:05:24
 FilePath: /GPM/Model.py
 Description: Graph Pseudo-label Propagation Model 
 
@@ -91,7 +91,7 @@ class GPPM(nn.Module):
     param {Range of propagation} propRange
     param {Mode of } mode
     '''    
-    def __init__(self, nFeature, nClass, propRange, alpha, beta, mode='ensemble'):
+    def __init__(self, nFeature, nClass, propRange, alpha, beta, mode='None'):
         super(GPPM, self).__init__()
         if mode == 'None':
             self.plpList = nn.ModuleList([
