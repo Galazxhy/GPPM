@@ -2,7 +2,7 @@
  # @Author: Galazxhy galazxhy@163.com
  # @Date: 2025-02-24 20:24:11
  # @LastEditors: Galazxhy galazxhy@163.com
- # @LastEditTime: 2025-04-20 11:57:03
+ # @LastEditTime: 2025-06-26 12:27:54
  # @FilePath: /GPM/run.sh
  # @Description: Run code script
  # 
@@ -22,12 +22,13 @@ mode=residual
 rep=20
 epoch=500
 lr=1e-3
-wd=5e-4
+wd=1e-4
 max_prop=4
+nl_func=sigmoid
 alpha=1
 beta=1
 #Early stopping
-patience=10
-delta=5e-4
+patience=15
+delta=1e-4
 
-python Run.py --device $device --data $data --val_rt $val_rt --trn_per_class $trn_per_class --model $model --mode $mode --rep $rep --epoch $epoch --lr $lr --wd $wd --patience $patience --delta $delta --max_prop $max_prop --alpha $alpha --beta $beta
+python Run.py --device $device --data $data --val_rt $val_rt --trn_per_class $trn_per_class --model $model --mode $mode --rep $rep --epoch $epoch --lr $lr --wd $wd --patience $patience --delta $delta --max_prop $max_prop --alpha $alpha --beta $beta --nl_func $nl_func

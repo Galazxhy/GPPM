@@ -9,6 +9,7 @@ Description: Code Running Script
 Copyright (c) 2025 by Astroyd, All Rights Reserved.
 """
 
+import os
 import tqdm
 import argparse
 import torch
@@ -28,6 +29,8 @@ param {Running parameters} args
 def run(args):
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     print("-------------- Loading Data --------------")
+    if not os.path.exists("./data"):
+        os.mkdir("./data")
     data, nFeatures, nClasses = Utils.getData(
         args.data, args.trn_per_class, args.val_rt
     )
@@ -40,10 +43,16 @@ def run(args):
         print(f"Repetition {i}")
         print("------------ Initializing model -------------")
         earlyStopping.reset()
-        best = [0, 0, 0, 0]
+        best = [0, 0, 0]
         bestNet = None
         net = Model.GPPM(
-            nFeatures, nClasses, args.max_prop, args.alpha, args.beta, args.mode
+            nFeatures,
+            nClasses,
+            args.max_prop,
+            args.alpha,
+            args.beta,
+            args.mode,
+            args.nl_func,
         ).to(device)
 
         optimizer = torch.optim.Adam(net.parameters(), lr=args.lr, weight_decay=args.wd)
@@ -78,6 +87,9 @@ def run(args):
                 bestNet = net
                 print(f"Early stopping at epoch {j}")
                 break
+            else:
+                best = accs
+                bestNet = net
             tbar.set_postfix(
                 Loss="{:.5f}".format(loss.item()),
                 trainAcc="{:.5f}".format(accs[0]),
@@ -88,7 +100,7 @@ def run(args):
         bestNets.append(bestNet)
         bestResults.append(best)
     bestResults = np.array(bestResults)
-    Utils.saveToFile(bestNets, np.array(bestResults))
+    Utils.saveToFile(bestNets, bestResults)
 
     print(
         "Accuracy:",
@@ -136,8 +148,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--mode",
         type=str,
-        default="voting",
-        choices=["None", "voting", "residual"],
+        default="late_fusion",
+        choices=["None", "late_fusion", "residual"],
         help="Ensemble mode",
     )
     parser.add_argument("--rep", type=int, default=20, help="Repetition times")
@@ -149,6 +161,13 @@ if __name__ == "__main__":
         type=int,
         default=4,
         help="Maximum propagation range (Not supporting customized range like (1, 3, 5))",
+    )
+    parser.add_argument(
+        "--nl_func",
+        type=str,
+        default="sigmoid",
+        choices=["none", "sigmoid", "relu", "shirink", "logsigmoid", "softmax"],
+        help="Non-linear Function",
     )
     parser.add_argument(
         "--alpha", type=float, default=1, help="Alpha for sigmoid function"

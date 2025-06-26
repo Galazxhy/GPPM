@@ -12,6 +12,7 @@ Copyright (c) 2025 by Astroyd, All Rights Reserved.
 import os
 import torch
 import numpy as np
+import torch.nn.functional as F
 
 from torch_geometric.datasets import Planetoid
 from torch_geometric.datasets import Amazon
@@ -132,6 +133,22 @@ return {Logical multiplication result of A and B}
 def soft_logic_mm(A, B, alpha, beta):
     # return torch.mm(A, B)
     return sigmoid(torch.mm(A, B), alpha, beta)
+
+
+def relu_mm(A, B):
+    return F.relu(torch.mm(A, B))
+
+
+def shrink_mm(A, B):
+    return F.tanhshrink(torch.mm(A, B))
+
+
+def logsigmoid_mm(A, B):
+    return F.logsigmoid(torch.mm(A, B))
+
+
+def softmax_mm(A, B):
+    return F.softmax(torch.mm(A, B))
 
 
 """
