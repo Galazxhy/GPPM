@@ -112,7 +112,7 @@ def ts_append(a, b):
 """
 description: Sigmoid function
 param {Input} x
-param {Stepness} alpha
+param {Steepness} alpha
 param {Bias} beta
 return {Result of sigmoid}
 """
@@ -122,33 +122,76 @@ def sigmoid(x, alpha, beta):
     return 1 / (1 + torch.exp(-alpha * (x - beta)))
 
 
-"""
-description: Soft Logical Matrix Multiplication
-param {matrix A} A
-param {matrix B} B
-return {Logical multiplication result of A and B}
-"""
+class nl_mm:
+    """
+    description: Different non-linear function for propagation
+    method {Normal matrix multiplication} none_mm(A, B)
+    method {Adjusted simgoid matrix multiplication} sigmoid_mm(A, B, alpha, beta)
+    method {Reset} reset()
+    """
 
+    """
+    description: Normal matrix multiplication
+    param {matrix A} A
+    param {matrix B} B
+    return {Logical multiplication result of A and B}
+    """
 
-def soft_logic_mm(A, B, alpha, beta):
-    # return torch.mm(A, B)
-    return sigmoid(torch.mm(A, B), alpha, beta)
+    def none_mm(self, A, B, p1=None, p2=None):
+        return torch.mm(A, B)
 
+    """
+    description: Adjusted sigmoid matrix multiplication
+    param {matrix A} A
+    param {matrix B} B
+    param {steepness of sigmoid} alpha
+    param {bias of sigmoid} beta
+    return {Logical multiplication result of A and B}
+    """
 
-def relu_mm(A, B):
-    return F.relu(torch.mm(A, B))
+    def sigmoid_mm(self, A, B, alpha, beta):
+        # return torch.mm(A, B)
+        return sigmoid(torch.mm(A, B), alpha, beta)
 
+    """
+    description: ReLU matrix multiplication
+    param {matrix A} A
+    param {matrix B} B
+    return {ReLU multiplication result of A and B}
+    """
 
-def shrink_mm(A, B):
-    return F.tanhshrink(torch.mm(A, B))
+    def relu_mm(self, A, B, p1=None, p2=None):
+        return F.relu(torch.mm(A, B))
 
+    """
+    description: Shirink function matrix multiplication
+    param {matrix A} A
+    param {matrix B} B
+    return {Shirink multiplication result of A and B}
+    """
 
-def logsigmoid_mm(A, B):
-    return F.logsigmoid(torch.mm(A, B))
+    def shrink_mm(self, A, B, p1=None, p2=None):
+        return F.tanhshrink(torch.mm(A, B))
 
+    """
+    description: Logsigmoid function matrix multiplication
+    param {matrix A} A
+    param {matrix B} B
+    return {Logsigmoid multiplication result of A and B}
+    """
 
-def softmax_mm(A, B):
-    return F.softmax(torch.mm(A, B))
+    def logsigmoid_mm(self, A, B, p1=None, p2=None):
+        return F.logsigmoid(torch.mm(A, B))
+
+    """
+    description: Softmax function matrix multiplication
+    param {matrix A} A
+    param {matrix B} B
+    return {Softmax multiplication result of A and B}
+    """
+
+    def softmax_mm(self, A, B, p1=None, p2=None):
+        return F.softmax(torch.mm(A, B))
 
 
 """

@@ -38,6 +38,7 @@ class plpLayer(nn.Module):
         self.predSeq = nn.Sequential(
             nn.Linear(nFeature, 32), nn.ReLU(), nn.Linear(32, nClass)
         )
+        self.dropout = nn.Dropout(0.5)
         self.softmax = nn.Softmax(dim=1)
         self.propRange = propRange
         self.mode = mode
@@ -54,45 +55,35 @@ class plpLayer(nn.Module):
     """
 
     def prop(self, propMatrix, pLabel):
-        if self.mode != "residual":
-            pLabelRe = pLabel
-            for i in range(self.propRange):
-                if self.nlFunc == "sigmoid":
-                    pLabel = Utils.soft_logic_mm(
-                        propMatrix, pLabelRe, self.alpha, self.beta
-                    )
-                elif self.nlFunc == "relu":
-                    pLabel = Utils.relu_mm(propMatrix, pLabelRe)
-                elif self.nlFunc == "none":
-                    pLabel = torch.mm(propMatrix, pLabelRe)
-                elif self.nlFunc == "shrink":
-                    pLabel = Utils.shrink_mm(propMatrix, pLabelRe)
-                elif self.nlFunc == "logsigmoid":
-                    pLabel = Utils.logsigmoid_mm(propMatrix, pLabelRe)
-                elif self.nlFunc == "softmax":
-                    pLabel = Utils.softmax_mm(propMatrix, pLabelRe)
+        if self.mode == "none":
+            for _ in range(self.propRange):
+                pLabel = getattr(Utils.nl_mm(), self.nlFunc + "_mm")(
+                    propMatrix, pLabel, self.alpha, self.beta
+                )
+                pLabel = self.dropout(pLabel)
             return self.softmax(pLabel)
-        else:
+        elif self.mode == "late_fusion":
             pLabelAll = []
             pLabelRe = pLabel
-            for i in range(self.propRange):
-                if self.nlFunc == "sigmoid":
-                    pLabelRe = Utils.soft_logic_mm(
-                        propMatrix, pLabelRe, self.alpha, self.beta
-                    )
-                elif self.nlFunc == "relu":
-                    pLabelRe = Utils.relu_mm(propMatrix, pLabelRe)
-                elif self.nlFunc == "none":
-                    pLabelRe = torch.mm(propMatrix, pLabelRe)
-                elif self.nlFunc == "shrink":
-                    pLabelRe = Utils.shrink_mm(propMatrix, pLabelRe)
-                elif self.nlFunc == "logsigmoid":
-                    pLabelRe = Utils.logsigmoid_mm(propMatrix, pLabelRe)
-                elif self.nlFunc == "softmax":
-                    pLabelRe = Utils.softmax_mm(propMatrix, pLabelRe)
-
+            for _ in range(self.propRange):
+                pLabelRe = getattr(Utils.nl_mm(), self.nlFunc + "_mm")(
+                    propMatrix, pLabelRe, self.alpha, self.beta
+                )
+                pLabelRe = self.dropout(pLabelRe)
                 pLabelAll.append(self.softmax(pLabelRe))
             return pLabelAll
+        elif self.mode == "residual":
+            pLabelRe = pLabel
+            for _ in range(self.propRange - 1):
+                pLabel = (
+                    getattr(Utils.nl_mm(), self.nlFunc + "_mm")(
+                        propMatrix, pLabel, self.alpha, self.beta
+                    )
+                    + pLabelRe
+                )
+                # pLabelRe = pLabel
+                pLabelRe = self.dropout(pLabel)
+            return self.softmax(pLabelRe)
 
     """
     description: Forward calculation
@@ -127,23 +118,10 @@ class GPPM(nn.Module):
     """
 
     def __init__(
-        self, nFeature, nClass, propRange, alpha, beta, mode="None", nlFunc="sigmoid"
+        self, nFeature, nClass, propRange, alpha, beta, mode="none", nlFunc="sigmoid"
     ):
         super(GPPM, self).__init__()
-        if mode == "None":
-            self.plpList = nn.ModuleList(
-                [plpLayer(nFeature, nClass, propRange, mode, alpha, beta, nlFunc)]
-            )
-        elif mode == "late_fusion":
-            self.plpList = nn.ModuleList()
-            for i in range(propRange):
-                self.plpList.append(
-                    plpLayer(nFeature, nClass, i + 1, mode, alpha, beta, nlFunc)
-                )
-        else:
-            self.plpList = nn.ModuleList(
-                [plpLayer(nFeature, nClass, propRange, mode, alpha, beta, nlFunc)]
-            )
+        self.plpList = plpLayer(nFeature, nClass, propRange, mode, alpha, beta, nlFunc)
 
         self.propRange = propRange
         self.mode = mode
@@ -165,15 +143,8 @@ class GPPM(nn.Module):
             x.device
         )
 
-        if self.mode == "None":
-            y = self.plpList[0]((propMatrix, x))
-        elif self.mode == "late_fusion":
-            y = None
-            for i in range(self.propRange):
-                y = Utils.ts_append(y, self.plpList[i]((propMatrix, x)))
-            y = y.sum(dim=0)
-        elif self.mode == "residual":
-            y = self.plpList[0]((propMatrix, x))
+        y = self.plpList((propMatrix, x))
+        if self.mode == "late_fusion":
             y = sum(y)
 
         return y

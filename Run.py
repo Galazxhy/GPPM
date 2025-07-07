@@ -110,6 +110,7 @@ def run(args):
         "\nStd",
         np.std(np.array(bestResults[:, 1]), ddof=1),
     )
+    return sum(bestResults[:, 2]) / len(bestResults[:, 2])
 
 
 """
@@ -149,7 +150,7 @@ if __name__ == "__main__":
         "--mode",
         type=str,
         default="late_fusion",
-        choices=["None", "late_fusion", "residual"],
+        choices=["none", "late_fusion", "residual"],
         help="Ensemble mode",
     )
     parser.add_argument("--rep", type=int, default=20, help="Repetition times")
@@ -166,7 +167,7 @@ if __name__ == "__main__":
         "--nl_func",
         type=str,
         default="sigmoid",
-        choices=["none", "sigmoid", "relu", "shirink", "logsigmoid", "softmax"],
+        choices=["none", "sigmoid", "relu", "shrink", "logsigmoid", "softmax"],
         help="Non-linear Function",
     )
     parser.add_argument(
